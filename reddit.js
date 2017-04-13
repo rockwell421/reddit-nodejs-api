@@ -1,3 +1,4 @@
+'use strict'
 var bcrypt = require('bcrypt-as-promised');
 var HASH_ROUNDS = 10;
 
@@ -7,12 +8,6 @@ class RedditAPI {
     }
 
     createUser(user) {
-        /*
-        first we have to hash the password. we will learn about hashing next week.
-        the goal of hashing is to store a digested version of the password from which
-        it is infeasible to recover the original password, but which can still be used
-        to assess with great confidence whether a provided password is the correct one or not
-         */
         return bcrypt.hash(user.password, HASH_ROUNDS)
             .then(hashedPassword => {
                 return this.conn.query('INSERT INTO users (username,password, createdAt, updatedAt) VALUES (?, ?, NOW(), NOW())', [user.username, hashedPassword]);
@@ -30,37 +25,101 @@ class RedditAPI {
                 }
             });
     }
-
-    createPost(post) {
+    
+    
+    createSubreddit(subreddit) {
         return this.conn.query(
             `
-            INSERT INTO posts (userId, title, url, createdAt, updatedAt)
-            VALUES (?, ?, ?, NOW(). NOW())`,
-            [post.userId, post.title, post.url]
-        )
+            INSERT INTO subreddits (name, description, createdAt, updatedAt)
+            VALUES (?, ?, NOW(), NOW())`, [subreddit.name, subreddit.description]
+            ) 
             .then(result => {
                 return result.insertId;
+            })
+            .catch(error => {
+                
+                if(error.code === 'ER_DUP_ENTRY') {
+                    throw new Error('A subreddit with this name already exists! Try another topic :)')
+                } 
+                else {
+                    throw error;
+                }
             });
     }
 
-    getAllPosts(callback) {
-        /*
-        strings delimited with ` are an ES2015 feature called "template strings".
-        they are more powerful than what we are using them for here. one feature of
-        template strings is that you can write them on multiple lines. if you try to
-        skip a line in a single- or double-quoted string, you would get a syntax error.
 
-        therefore template strings make it very easy to write SQL queries that span multiple
-        lines without having to manually split the string line by line.
-         */
+//modify the createPost function to look for a subredditId property in the post 
+//object and use it. createPost should return an error if subredditId is not provided.
+
+//INSERT INTO posts (userId, title, url, createdAt, updatedAt)
+
+    createPost(post) {
+        return this.conn.query(
+            'INSERT INTO posts (userId, title, url, createdAt, updatedAt, subredditId) VALUES (?, ?, ?, NOW(), NOW(), ?)',
+            [post.userId, post.title, post.url, post.subredditId])
+            .then(result => {
+                //console.log(result.subredditId);
+                return result.subredditId;
+            })
+            .catch(error => {
+                // Special error handling for no subreddit ID
+                if (error.code === 'ER_NO_SRID') {
+                    throw new Error('This Subreddit does not exist');
+                }
+                else {
+                    throw error;
+                }
+                });
+    }
+
+
+
+
+
+    getAllPosts(callback) {
         return this.conn.query(
             `
-            SELECT id, title, url, userId, createdAt, updatedAt
-            FROM posts
-            ORDER BY createdAt DESC
+            SELECT posts.id, posts.title, posts.url, posts.userId, posts.createdAt, posts.updatedAt, users.username, users.createdAt AS usercreatedAt, users.updatedAt AS userupdatedAt
+            FROM posts LEFT JOIN users ON users.id = posts.userId
+            JOIN subreddits ON posts.subredditId = subreddit.id
+            ORDER BY posts.createdAt DESC 
             LIMIT 25`
-        );
+            
+        ).then (//console.log('testing');
+            function(result) {
+            return result.map(function(val) {
+                return {
+                    id: val.id,
+                    title: val.title,
+                    url: val.url,
+                    createdAt: val.createdAt,
+                    updatedAt: val.updatedAt,
+                    userId: val.userId,
+                    user:{
+                        id:val.id,
+                        username: val.username,
+                        createdAt: val.createdAt,
+                        updatedAt: val.updatedAt
+                    }
+                }
+                //console.log('this is the result', val);
+            })
+        });
+        
+    }
+    
+    getAllSubreddits() {
+        return this.conn.query(
+            `
+            SELECT *
+            FROM subreddits
+            ORDER BY subreddits.createdAt DESC 
+            LIMIT 25
+            `
+            )
     }
 }
 
+
 module.exports = RedditAPI;
+

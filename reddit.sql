@@ -11,6 +11,7 @@ CREATE TABLE users (
 
 -- This creates the posts table. The userId column references the id column of
 -- users. If a user is deleted, the corresponding posts' userIds will be set NULL.
+
 CREATE TABLE posts (
   id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(300) DEFAULT NULL,
@@ -21,3 +22,24 @@ CREATE TABLE posts (
   KEY userId (userId), -- why did we add this here? ask me :)
   CONSTRAINT validUser FOREIGN KEY (userId) REFERENCES users (id) ON DELETE SET NULL
 );
+
+CREATE TABLE subreddits (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(30) DEFAULT NULL UNIQUE,
+  description VARCHAR(200),
+  url VARCHAR(2000) DEFAULT NULL,
+  userId INT DEFAULT NULL,
+  createdAt DATETIME NOT NULL,
+  updatedAt DATETIME NOT NULL
+);
+
+CREATE INDEX subredditName on subreddits(name);
+
+
+
+ALTER TABLE posts ADD COLUMN subredditId INT AFTER id;
+
+ALTER TABLE posts ADD CONSTRAINT subredditId
+  FOREIGN KEY (subredditId) REFERENCES subreddits (id);
+
+
