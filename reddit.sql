@@ -1,3 +1,10 @@
+-- DROP DATABASE reddit;
+-- CREATE DATABASE reddit;
+-- USE reddit;
+-- source ~
+
+
+
 -- This creates the users table. The username field is constrained to unique
 -- values only, by using a UNIQUE KEY on that column
 CREATE TABLE users (
@@ -53,7 +60,5 @@ CREATE TABLE votes (
   KEY postId (postId),
   CONSTRAINT validVoteUser FOREIGN KEY (userId) REFERENCES users (id) ON DELETE CASCADE, 
   CONSTRAINT validVotePost FOREIGN KEY (postId) REFERENCES posts (id) ON DELETE CASCADE);
-
-
 
 

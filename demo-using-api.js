@@ -47,5 +47,11 @@ var myReddit = new RedditAPI(connection);
 //     console.log(result);
 // });
 
-//myReddit.getAllPosts();
+// myReddit.getAllPosts().then(function(result){
+//     console.log(result);
+    
+// }
 
+// );
+
+myReddit.getAllSubreddits('montreal');

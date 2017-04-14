@@ -15,36 +15,38 @@ class RedditAPI {
             .then(result => {
                 return result.insertId;
             })
-            .catch(error => {
+            // .catch(error => {
                 // Special error handling for duplicate entry
-                if (error.code === 'ER_DUP_ENTRY') {
-                    throw new Error('A user with this username already exists');
-                }
-                else {
-                    throw error;
-                }
-            });
+                // if (error.code === 'ER_DUP_ENTRY') {
+                //     throw new Error('A user with this username already exists');
+                // }
+                // else {
+                //     throw error;
+                // }
+            // });
     }
     
     
     createSubreddit(subreddit) {
+        console.log(subreddit);
         return this.conn.query(
             `
             INSERT INTO subreddits (name, description, createdAt, updatedAt)
-            VALUES (?, ?, NOW(), NOW())`, [subreddit.name, subreddit.description]
+            VALUES (?, ?, NOW(), NOW())`, [subreddit.name, subreddit.title]
             ) 
             .then(result => {
                 return result.insertId;
             })
-            .catch(error => {
+            // .catch(error => {
                 
-                if(error.code === 'ER_DUP_ENTRY') {
-                    throw new Error('A subreddit with this name already exists! Try another topic :)')
-                } 
-                else {
-                    throw error;
-                }
-            });
+            //     if(error.code === 'ER_DUP_ENTRY') {
+            //         throw new Error('A subreddit with this name already exists! Try another topic :)')
+            //     } 
+            //     else {
+            //         throw error;
+            //     }
+            // });
+            ;
     }
 
 
@@ -90,38 +92,69 @@ class RedditAPI {
 
 
 
-    getAllPosts(callback) {
+    getAllPosts() {
         return this.conn.query(
             `
-            SELECT SUM(votes.voteDirection), posts.id, posts.title, posts.url, posts.userId, posts.createdAt, posts.updatedAt, users.username, users.createdAt AS usercreatedAt, users.updatedAt AS userupdatedAt
-            FROM posts LEFT JOIN users ON users.id = posts.userId
-            JOIN subreddits ON posts.subredditId = subreddit.id
-            JOIN votes ON posts.id = votes.postId
-            ORDER BY votes.voteScore DESC 
-            LIMIT 25
-            GROUP BY votes.postId`
+            SELECT 
+                SUM(votes.voteDirection) AS votes_Score, 
+                posts.id AS posts_id, 
+                posts.title As posts_title, 
+                posts.url AS posts_url, 
+                posts.userId AS posts_userID, 
+                posts.createdAt AS posts_createdAt, 
+                posts.updatedAt AS posts_updatedAt,
+                users.id AS users_id,
+                users.username AS users_username,
+                users.createdAt AS users_createdAt, 
+                users.updatedAt AS users_updatedAt,
+                subreddits.id AS subreddits_id,
+                subreddits.name AS subreddits_name,
+                subreddits.description AS subreddits_description,
+                subreddits.url AS subreddits_url,
+                subreddits.createdAt AS subreddits_createdAt,
+                subreddits.updatedAt AS subreddits_updatedAt
+            FROM posts 
+            JOIN users ON users.id = posts.userId
+            JOIN subreddits ON posts.subredditId = subreddits.id
+            LEFT JOIN votes ON posts.id = votes.postId
+            GROUP BY votes.postId
+            ORDER BY votes_Score
+            LIMIT 25`
             
-        ).then (//console.log('testing');
-            function(result) {
+            
+        ).then (function(result) {
             return result.map(function(val) {
-                return {
-                    id: val.id,
-                    title: val.title,
-                    url: val.url,
-                    createdAt: val.createdAt,
-                    updatedAt: val.updatedAt,
-                    userId: val.userId,
-                    user:{
-                        id:val.id,
-                        username: val.username,
-                        createdAt: val.createdAt,
-                        updatedAt: val.updatedAt
-                    }
-                }
-                //console.log('this is the result', val);
-            })
-        });
+                console.log(val);
+                    return {
+                        
+                        votes_Score: val.votes_Score,
+                        posts_id: val.posts_id,
+                        posts_title: val.posts_title,
+                        posts_url: val.posts_url,
+                        posts_createdAt: val.posts_createdAt,
+                        posts_updatedAt: val.posts_updatedAt,
+                        
+                        user:{
+                            users_id: val.users_id,
+                            users_username: val.users_username,
+                            users_createdAt: val.users_createdAt,
+                            users_updatedAt: val.users_updatedAt
+                        },
+                        
+                        subreddits:{
+                            subreddits_id: val.subreddits_id,
+                            subreddits_name: val.subreddits_name,
+                            subreddits_description: val.subreddits_description,
+                            subreddits_url: val.subreddits_url,
+                            subreddits_createdAt : val.subreddits_createdAt,
+                            subreddits_updatedAt: val.subreddits_updatedAt
+                        }
+                        
+                    }   
+                    //console.log('this is the result', val);
+            });
         
+        });
     }
     
     getAllSubreddits() {
