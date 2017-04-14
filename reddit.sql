@@ -41,5 +41,19 @@ ALTER TABLE posts ADD COLUMN subredditId INT AFTER id;
 
 ALTER TABLE posts ADD CONSTRAINT subredditId
   FOREIGN KEY (subredditId) REFERENCES subreddits (id);
+  
+CREATE TABLE votes (
+  userId INT,
+  postId INT,
+  voteDirection TINYINT,
+  createdAt DATETIME NOT NULL,
+  updatedAt DATETIME NOT NULL,
+  PRIMARY KEY (userId, postId), 
+  KEY userId (userId),
+  KEY postId (postId),
+  CONSTRAINT validVoteUser FOREIGN KEY (userId) REFERENCES users (id) ON DELETE CASCADE, 
+  CONSTRAINT validVotePost FOREIGN KEY (postId) REFERENCES posts (id) ON DELETE CASCADE);
+
+
 
 

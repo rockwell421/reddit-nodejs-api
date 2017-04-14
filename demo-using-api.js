@@ -43,6 +43,9 @@ var myReddit = new RedditAPI(connection);
 //myReddit.createSubreddit({
 //    name: 'Test4', description: 'First Reddit Post'});
 
-myReddit.createPost(post).then(function(result){
-    console.log(result);
-});
+// myReddit.createPost(post).then(function(result){
+//     console.log(result);
+// });
+
+//myReddit.getAllPosts();
+

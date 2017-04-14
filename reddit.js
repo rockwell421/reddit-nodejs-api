@@ -55,7 +55,7 @@ class RedditAPI {
 
     createPost(post) {
         return this.conn.query(
-            'INSERT INTO posts (userId, title, url, createdAt, updatedAt, subredditId) VALUES (?, ?, ?, NOW(), NOW(), ?)',
+            `INSERT INTO posts (userId, title, url, createdAt, updatedAt, subredditId) VALUES (?, ?, ?, NOW(), NOW(), ?)`,
             [post.userId, post.title, post.url, post.subredditId])
             .then(result => {
                 //console.log(result.subredditId);
@@ -73,17 +73,33 @@ class RedditAPI {
     }
 
 
+    createVote(vote) {
+            if(vote.voteDirection === 1 || vote.voteDirection === 0 || vote.voteDirection === -1) {
+                return this.conn.query(
+                    `
+                    INSERT INTO votes SET postId = ?, userId = ?, voteDirection = ? 
+                    ON DUPLICATE KEY UPDATE voteDirection = ?
+                    `
+                    [vote.postId, vote.userId, vote.voteDirection, vote.voteDirection])
+                    .catch(console.log);
+            } 
+            else {
+                throw new Error('Bad Vote');
+            }
+        }
 
 
 
     getAllPosts(callback) {
         return this.conn.query(
             `
-            SELECT posts.id, posts.title, posts.url, posts.userId, posts.createdAt, posts.updatedAt, users.username, users.createdAt AS usercreatedAt, users.updatedAt AS userupdatedAt
+            SELECT SUM(votes.voteDirection), posts.id, posts.title, posts.url, posts.userId, posts.createdAt, posts.updatedAt, users.username, users.createdAt AS usercreatedAt, users.updatedAt AS userupdatedAt
             FROM posts LEFT JOIN users ON users.id = posts.userId
             JOIN subreddits ON posts.subredditId = subreddit.id
-            ORDER BY posts.createdAt DESC 
-            LIMIT 25`
+            JOIN votes ON posts.id = votes.postId
+            ORDER BY votes.voteScore DESC 
+            LIMIT 25
+            GROUP BY votes.postId`
             
         ).then (//console.log('testing');
             function(result) {
@@ -116,8 +132,10 @@ class RedditAPI {
             ORDER BY subreddits.createdAt DESC 
             LIMIT 25
             `
-            )
+            );
     }
+    
+    
 }
 
 
