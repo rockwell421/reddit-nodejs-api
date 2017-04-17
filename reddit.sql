@@ -1,6 +1,6 @@
--- DROP DATABASE reddit;
--- CREATE DATABASE reddit;
--- USE reddit;
+DROP DATABASE reddit;
+CREATE DATABASE reddit;
+USE reddit;
 -- source ~
 
 

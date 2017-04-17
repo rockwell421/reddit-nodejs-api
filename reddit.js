@@ -28,11 +28,11 @@ class RedditAPI {
     
     
     createSubreddit(subreddit) {
-        console.log(subreddit);
+        // console.log(subreddit);
         return this.conn.query(
             `
             INSERT INTO subreddits (name, description, createdAt, updatedAt)
-            VALUES (?, ?, NOW(), NOW())`, [subreddit.name, subreddit.title]
+            VALUES (?, ?, NOW(), NOW())`, [subreddit.name, subreddit.description]
             ) 
             .then(result => {
                 return result.insertId;
@@ -63,15 +63,15 @@ class RedditAPI {
                 //console.log(result.subredditId);
                 return result.subredditId;
             })
-            .catch(error => {
-                // Special error handling for no subreddit ID
-                if (error.code === 'ER_NO_SRID') {
-                    throw new Error('This Subreddit does not exist');
-                }
-                else {
-                    throw error;
-                }
-                });
+            // .catch(error => {
+            //     // Special error handling for no subreddit ID
+            //     if (error.code === 'ER_NO_SRID') {
+            //         throw new Error('This Subreddit does not exist');
+            //     }
+            //     else {
+            //         throw error;
+            //     }
+            //     });
     }
 
 

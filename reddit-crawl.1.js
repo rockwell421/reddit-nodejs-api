@@ -2,31 +2,26 @@ var request = require('request-promise');
 var mysql = require('promise-mysql');
 var RedditAPI = require('./reddit');
 
-crawl();
 function getSubreddits() {
-    return request('https://www.reddit.com/subreddits.json')
+    return request('https://www.reddit.com/.json')
         .then(response => {
-            var result = JSON.parse(response);
-            
-                return result.data.subreddit.map(element => {
-                    
-                console.log(element.data.subreddit);
-                
+            var item = JSON.parse(response);
+                return item.data.children.map(function(element) {
+                //console.log(element.data.subreddit);
                 return element.data.subreddit;
                 }
             );
         });
 }
-    
-    
-    
+
+
 function getPostsForSubreddit(subredditName) {
     return request('https://www.reddit.com/r/' + subredditName + '/.json?limit=50')
         .then(
             response => {
                 var result = JSON.parse(response);
 
-                return result.data.children.filter(elements => {
+                return result.data.children.filter(function(elements) {
                         return elements.data.is_self === true;
                      }).map(function(value) {
                         //  console.log(value.data.title);
@@ -50,11 +45,12 @@ function getPostsForSubreddit(subredditName) {
 
 }
 
+
 function crawl() {
     // create a connection to the DB
     var connection = mysql.createPool({
         host     : 'localhost',
-        user     : 'root',
+        user     : 'root', 
         password : '',
         database: 'reddit',
         connectionLimit: 10
@@ -68,6 +64,7 @@ function crawl() {
 
     /*
     Crawling will go as follows:
+
         1. Get a list of popular subreddits
         2. Loop thru each subreddit and:
             a. Use the `createSubreddit` function to create it in your database
@@ -83,7 +80,7 @@ function crawl() {
         .then(subredditNames => {
             subredditNames.forEach(subredditName => {
                 var subId;
-                myReddit.createSubreddit({name: subredditName})
+                myReddit.createSubreddit({name: subredditName, description: null})
                     .then(subredditId => {
                         subId = subredditId;
                         return getPostsForSubreddit(subredditName)
@@ -98,14 +95,10 @@ function crawl() {
                                 userIdPromise = myReddit.createUser({
                                     username: post.user,
                                     password: 'abc123'
-                            })
-                            .catch(function(err) {
-                                    return users[post.user];
-                                })
+                                });
                             }
 
                             userIdPromise.then(userId => {
-                                users[post.user] = userId;
                                 return myReddit.createPost({
                                     subredditId: subId,
                                     userId: userId,
@@ -118,3 +111,8 @@ function crawl() {
             });
         });
 }
+
+crawl();
+//getSubreddits('montreal');
+//getPostsForSubreddit('montreal');
+
